@@ -23,6 +23,10 @@ function getSpecifiedFiles(dir, ignoreDirectory = '', ignoreFile = '') {
       return files.concat(getSpecifiedFiles(name, ignoreDirectory, ignoreFile));
     }
 
+    /**
+     * 这边有个问题，忽略的文件夹是绝对路径比较好
+     * nwj备注
+     */
     const isIgnoreDirectory =
       !ignoreDirectory ||
       (ignoreDirectory &&

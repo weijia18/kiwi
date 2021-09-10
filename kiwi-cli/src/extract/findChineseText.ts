@@ -299,4 +299,4 @@ function findChineseText(code: string, fileName: string) {
   }
 }
 
-export { findChineseText };
+export { findChineseText, findVueText, findTextInVueTs };
