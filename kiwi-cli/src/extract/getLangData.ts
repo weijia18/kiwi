@@ -16,63 +16,85 @@ const I18N_GLOB = `${LANG_DIR}/**/*.ts`;
  * 获取对应文件的语言
  */
 function getLangData(fileName) {
-  if (fs.existsSync(fileName)) {
-    return getLangJson(fileName);
-  } else {
-    return {};
-  }
+    if (fs.existsSync(fileName)) {
+        return getLangJson(fileName);
+    } else {
+        return {};
+    }
 }
 
 /**
  * 获取文件 Json
  */
 function getLangJson(fileName) {
-  const fileContent = fs.readFileSync(fileName, { encoding: 'utf8' });
-  let obj = fileContent.match(/export\s*default\s*({[\s\S]+);?$/)[1];
-  obj = obj.replace(/\s*;\s*$/, '');
-  let jsObj = {};
-  try {
-    jsObj = eval('(' + obj + ')');
-  } catch (err) {
-    console.log(obj);
-    console.error(err);
-  }
-  return jsObj;
+    const fileContent = fs.readFileSync(fileName, { encoding: 'utf8' });
+    let obj = fileContent.match(/export\s*default\s*({[\s\S]+);?$/)[1];
+    obj = obj.replace(/\s*;\s*$/, '');
+    let jsObj = {};
+    try {
+        jsObj = eval('(' + obj + ')');
+    } catch (err) {
+        console.log(obj);
+        console.error(err);
+    }
+    return jsObj;
 }
 
 function getI18N() {
-  const paths = globby.sync(I18N_GLOB);
-  const langObj = paths.reduce((prev, curr) => {
-    const filename = curr
-      .split('/')
-      .pop()
-      .replace(/\.tsx?$/, '');
-    if (filename.replace(/\.tsx?/, '') === 'index') {
-      return prev;
-    }
+    /**
+     *    ├── unicorn
+     *    ├── cake
+     *    └── rainbow
+     *     const globby = require('globby');
+     *
+     *     (async () => {
+     *         const paths = await globby(['*', '!cake']);
+     *
+     *         console.log(paths);
+     *         //=> ['unicorn', 'rainbow']
+     *     })();
+     */
+    const paths = globby.sync(I18N_GLOB);
+    const langObj = paths.reduce((prev, curr) => {
+        const filename = curr
+            .split('/')
+            .pop()
+            .replace(/\.tsx?$/, '');
+        if (filename.replace(/\.tsx?/, '') === 'index') {
+            return prev;
+        }
 
-    const fileContent = getLangData(curr);
-    let jsObj = fileContent;
+        const fileContent = getLangData(curr);
+        let jsObj = fileContent;
 
-    if (Object.keys(jsObj).length === 0) {
-      console.log(`\`${curr}\` 解析失败，该文件包含的文案无法自动补全`);
-    }
+        if (Object.keys(jsObj).length === 0) {
+            console.log(`\`${curr}\` 解析失败，该文件包含的文案无法自动补全`);
+        }
 
-    return {
-      ...prev,
-      [filename]: jsObj
-    };
-  }, {});
-  return langObj;
+        return {
+            ...prev,
+            [filename]: jsObj
+        };
+    }, {});
+    /**langObj
+     * {
+     *    key:value
+     * }
+     * 其中key为filename，value为该文件的配置对象
+     */
+    return langObj;
 }
 
 /**
  * 获取全部语言, 展平
  */
 function getSuggestLangObj() {
-  const langObj = getI18N();
-  const finalLangObj = flatten(langObj);
-  return finalLangObj;
+    const langObj = getI18N();
+    const finalLangObj = flatten(langObj);
+    /**
+     * finalLangObj为keyPath对象
+     */
+    return finalLangObj;
 }
 
 export { getSuggestLangObj, getLangData };

@@ -51,7 +51,7 @@ function writeMessagesToFile(messages: any, file: string, lang: string) {
     const rst = {};
     traverse(srcMessages, (message, key) => {
         /**
-         * 优先使用messages里面的国际化路径key对应的值，此为csv文件导入进来的值
+         * 优先使用messages里面的国际化路径key对应的值，此为tsv文件导入进来的值
          * 不存在的情况下,使用原有lang对应的配置文件中的值
          * 此迭代是基于中文srcMessages对象的，默认是翻译中文
          */
