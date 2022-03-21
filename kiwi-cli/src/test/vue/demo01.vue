@@ -7,8 +7,8 @@
             <p>红烧豆腐</p>
             <Test></Test>
         </div>
-        <div class="item">
-            <span>蜀山街道</span>
+        <div :class="['item', flag ? 'flag' : '']">
+            <span>蜀山街道{{ name }}</span>
         </div>
     </div>
 </template>
@@ -19,7 +19,10 @@ export default {
         Test
     },
     data() {
-        return {};
+        return {
+            name: "傻逼",
+            flag: true
+        };
     }
 };
 </script>

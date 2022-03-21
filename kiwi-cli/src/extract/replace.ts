@@ -15,36 +15,42 @@ const CONFIG = getProjectConfig();
 const srcLangDir = getLangDir(CONFIG.srcLang);
 
 function updateLangFiles(keyValue, text, validateDuplicate) {
-  if (!_.startsWith(keyValue, 'I18N.')) {
-    return;
-  }
-
-  const [, filename, ...restPath] = keyValue.split('.');
-  const fullKey = restPath.join('.');
-  const targetFilename = `${srcLangDir}/${filename}.ts`;
-
-  if (!fs.existsSync(targetFilename)) {
-    fs.writeFileSync(targetFilename, generateNewLangFile(fullKey, text));
-    addImportToMainLangFile(filename);
-    console.log(`成功新建语言文件 ${targetFilename}`);
-  } else {
-    // 清除 require 缓存，解决手动更新语言文件后再自动抽取，导致之前更新失效的问题
-    const mainContent = getLangData(targetFilename);
-    const obj = mainContent;
-
-    if (Object.keys(obj).length === 0) {
-      console.log(`${filename} 解析失败，该文件包含的文案无法自动补全`);
+    if (!_.startsWith(keyValue, 'I18N.')) {
+        return;
     }
 
-    if (validateDuplicate && _.get(obj, fullKey) !== undefined) {
-      console.log(`${targetFilename} 中已存在 key 为 \`${fullKey}\` 的翻译，请重新命名变量`);
-      throw new Error('duplicate');
+    const [, filename, ...restPath] = keyValue.split('.');
+    const fullKey = restPath.join('.');
+    const targetFilename = `${srcLangDir}/${filename}.ts`;
+
+    if (!fs.existsSync(targetFilename)) {
+        /**
+         * zh-CN文件夹下的语言配置文件名称从keyValue得来
+         */
+        fs.writeFileSync(targetFilename, generateNewLangFile(fullKey, text));
+        /**
+         * 向index.ts文件新增创建的语言配置文件
+         */
+        addImportToMainLangFile(filename);
+        console.log(`成功新建语言文件 ${targetFilename}`);
+    } else {
+        // 清除 require 缓存，解决手动更新语言文件后再自动抽取，导致之前更新失效的问题
+        const mainContent = getLangData(targetFilename);
+        const obj = mainContent;
+
+        if (Object.keys(obj).length === 0) {
+            console.log(`${filename} 解析失败，该文件包含的文案无法自动补全`);
+        }
+
+        if (validateDuplicate && _.get(obj, fullKey) !== undefined) {
+            console.log(`${targetFilename} 中已存在 key 为 \`${fullKey}\` 的翻译，请重新命名变量`);
+            throw new Error('duplicate');
+        }
+        // \n 会被自动转义成 \\n，这里转回来
+        text = text.replace(/\\n/gm, '\n');
+        _.set(obj, fullKey, text);
+        fs.writeFileSync(targetFilename, prettierFile(`export default ${JSON.stringify(obj, null, 2)}`));
     }
-    // \n 会被自动转义成 \\n，这里转回来
-    text = text.replace(/\\n/gm, '\n');
-    _.set(obj, fullKey, text);
-    fs.writeFileSync(targetFilename, prettierFile(`export default ${JSON.stringify(obj, null, 2)}`));
-  }
 }
 
 /**
@@ -52,53 +58,53 @@ function updateLangFiles(keyValue, text, validateDuplicate) {
  * @param fileContent
  */
 function prettierFile(fileContent) {
-  try {
-    return prettier.format(fileContent, {
-      parser: 'typescript',
-      trailingComma: 'all',
-      singleQuote: true
-    });
-  } catch (e) {
-    console.error(`代码格式化报错！${e.toString()}\n代码为：${fileContent}`);
-    return fileContent;
-  }
+    try {
+        return prettier.format(fileContent, {
+            parser: 'typescript',
+            trailingComma: 'all',
+            singleQuote: true
+        });
+    } catch (e) {
+        console.error(`代码格式化报错！${e.toString()}\n代码为：${fileContent}`);
+        return fileContent;
+    }
 }
 
 function generateNewLangFile(key, value) {
-  const obj = _.set({}, key, value);
+    const obj = _.set({}, key, value);
 
-  return prettierFile(`export default ${JSON.stringify(obj, null, 2)}`);
+    return prettierFile(`export default ${JSON.stringify(obj, null, 2)}`);
 }
 
 function addImportToMainLangFile(newFilename) {
-  let mainContent = '';
-  if (fs.existsSync(`${srcLangDir}/index.ts`)) {
-    mainContent = fs.readFileSync(`${srcLangDir}/index.ts`, 'utf8');
-    mainContent = mainContent.replace(/^(\s*import.*?;)$/m, `$1\nimport ${newFilename} from './${newFilename}';`);
-    if (/(}\);)/.test(mainContent)) {
-      if (/\,\n(}\);)/.test(mainContent)) {
-        /** 最后一行包含,号 */
-        mainContent = mainContent.replace(/(}\);)/, `  ${newFilename},\n$1`);
-      } else {
-        /** 最后一行不包含,号 */
-        mainContent = mainContent.replace(/\n(}\);)/, `,\n  ${newFilename},\n$1`);
-      }
+    let mainContent = '';
+    if (fs.existsSync(`${srcLangDir}/index.ts`)) {
+        mainContent = fs.readFileSync(`${srcLangDir}/index.ts`, 'utf8');
+        mainContent = mainContent.replace(/^(\s*import.*?;)$/m, `$1\nimport ${newFilename} from './${newFilename}';`);
+        if (/(}\);)/.test(mainContent)) {
+            if (/\,\n(}\);)/.test(mainContent)) {
+                /** 最后一行包含,号 */
+                mainContent = mainContent.replace(/(}\);)/, `  ${newFilename},\n$1`);
+            } else {
+                /** 最后一行不包含,号 */
+                mainContent = mainContent.replace(/\n(}\);)/, `,\n  ${newFilename},\n$1`);
+            }
+        }
+        // 兼容 export default { common };的写法
+        if (/(};)/.test(mainContent)) {
+            if (/\,\n(};)/.test(mainContent)) {
+                /** 最后一行包含,号 */
+                mainContent = mainContent.replace(/(};)/, `  ${newFilename},\n$1`);
+            } else {
+                /** 最后一行不包含,号 */
+                mainContent = mainContent.replace(/\n(};)/, `,\n  ${newFilename},\n$1`);
+            }
+        }
+    } else {
+        mainContent = `import ${newFilename} from './${newFilename}';\n\nexport default Object.assign({}, {\n  ${newFilename},\n});`;
     }
-    // 兼容 export default { common };的写法
-    if (/(};)/.test(mainContent)) {
-      if (/\,\n(};)/.test(mainContent)) {
-        /** 最后一行包含,号 */
-        mainContent = mainContent.replace(/(};)/, `  ${newFilename},\n$1`);
-      } else {
-        /** 最后一行不包含,号 */
-        mainContent = mainContent.replace(/\n(};)/, `,\n  ${newFilename},\n$1`);
-      }
-    }
-  } else {
-    mainContent = `import ${newFilename} from './${newFilename}';\n\nexport default Object.assign({}, {\n  ${newFilename},\n});`;
-  }
 
-  fs.writeFileSync(`${srcLangDir}/index.ts`, mainContent);
+    fs.writeFileSync(`${srcLangDir}/index.ts`, mainContent);
 }
 
 /**
@@ -106,44 +112,44 @@ function addImportToMainLangFile(newFilename) {
  * @param filePath 文件路径
  */
 function hasImportI18N(filePath) {
-  const code = readFile(filePath);
-  const ast = ts.createSourceFile('', code, ts.ScriptTarget.ES2015, true, ts.ScriptKind.TSX);
-  let hasImportI18N = false;
+    const code = readFile(filePath);
+    const ast = ts.createSourceFile('', code, ts.ScriptTarget.ES2015, true, ts.ScriptKind.TSX);
+    let hasImportI18N = false;
 
-  function visit(node) {
-    if (node.kind === ts.SyntaxKind.ImportDeclaration) {
-      const importClause = node.importClause;
+    function visit(node) {
+        if (node.kind === ts.SyntaxKind.ImportDeclaration) {
+            const importClause = node.importClause;
 
-      // import I18N from 'src/utils/I18N';
-      if (_.get(importClause, 'kind') === ts.SyntaxKind.ImportClause) {
-        if (importClause.name) {
-          if (importClause.name.escapedText === 'I18N') {
-            hasImportI18N = true;
-          }
-        } else {
-          const namedBindings = importClause.namedBindings;
-          // import { I18N } from 'src/utils/I18N';
-          if (namedBindings.kind === ts.SyntaxKind.NamedImports) {
-            namedBindings.elements.forEach(element => {
-              if (element.kind === ts.SyntaxKind.ImportSpecifier && _.get(element, 'name.escapedText') === 'I18N') {
-                hasImportI18N = true;
-              }
-            });
-          }
-          // import * as I18N from 'src/utils/I18N';
-          if (namedBindings.kind === ts.SyntaxKind.NamespaceImport) {
-            if (_.get(namedBindings, 'name.escapedText') === 'I18N') {
-              hasImportI18N = true;
+            // import I18N from 'src/utils/I18N';
+            if (_.get(importClause, 'kind') === ts.SyntaxKind.ImportClause) {
+                if (importClause.name) {
+                    if (importClause.name.escapedText === 'I18N') {
+                        hasImportI18N = true;
+                    }
+                } else {
+                    const namedBindings = importClause.namedBindings;
+                    // import { I18N } from 'src/utils/I18N';
+                    if (namedBindings.kind === ts.SyntaxKind.NamedImports) {
+                        namedBindings.elements.forEach(element => {
+                            if (element.kind === ts.SyntaxKind.ImportSpecifier && _.get(element, 'name.escapedText') === 'I18N') {
+                                hasImportI18N = true;
+                            }
+                        });
+                    }
+                    // import * as I18N from 'src/utils/I18N';
+                    if (namedBindings.kind === ts.SyntaxKind.NamespaceImport) {
+                        if (_.get(namedBindings, 'name.escapedText') === 'I18N') {
+                            hasImportI18N = true;
+                        }
+                    }
+                }
             }
-          }
         }
-      }
     }
-  }
 
-  ts.forEachChild(ast, visit);
+    ts.forEachChild(ast, visit);
 
-  return hasImportI18N;
+    return hasImportI18N;
 }
 
 /**
@@ -151,22 +157,22 @@ function hasImportI18N(filePath) {
  * @param filePath 文件路径
  */
 function createImportI18N(filePath) {
-  const code = readFile(filePath);
-  const ast = ts.createSourceFile('', code, ts.ScriptTarget.ES2015, true, ts.ScriptKind.TSX);
-  const isTsFile = _.endsWith(filePath, '.ts');
-  const isTsxFile = _.endsWith(filePath, '.tsx');
-  const isVueFile = _.endsWith(filePath, '.vue');
-  if (isTsFile || isTsxFile) {
-    const importStatement = `${CONFIG.importI18N}\n`;
-    const pos = ast.getStart(ast, false);
-    const updateCode = code.slice(0, pos) + importStatement + code.slice(pos);
+    const code = readFile(filePath);
+    const ast = ts.createSourceFile('', code, ts.ScriptTarget.ES2015, true, ts.ScriptKind.TSX);
+    const isTsFile = _.endsWith(filePath, '.ts');
+    const isTsxFile = _.endsWith(filePath, '.tsx');
+    const isVueFile = _.endsWith(filePath, '.vue');
+    if (isTsFile || isTsxFile) {
+        const importStatement = `${CONFIG.importI18N}\n`;
+        const pos = ast.getStart(ast, false);
+        const updateCode = code.slice(0, pos) + importStatement + code.slice(pos);
 
-    return updateCode;
-  } else if (isVueFile) {
-    const importStatement = `${CONFIG.importI18N}\n`;
-    const updateCode = code.replace(/<script>/g, `<script>\n${importStatement}`);
-    return updateCode;
-  }
+        return updateCode;
+    } else if (isVueFile) {
+        const importStatement = `${CONFIG.importI18N}\n`;
+        const updateCode = code.replace(/<script>/g, `<script>\n${importStatement}`);
+        return updateCode;
+    }
 }
 
 /**
@@ -177,59 +183,76 @@ function createImportI18N(filePath) {
  * @param validateDuplicate 是否校验文件中已经存在要写入的 key
  */
 function replaceAndUpdate(filePath, arg, val, validateDuplicate) {
-  const code = readFile(filePath);
-  const isHtmlFile = _.endsWith(filePath, '.html');
-  const isVueFile = _.endsWith(filePath, '.vue');
-  let newCode = code;
-  let finalReplaceText = arg.text;
-  const { start, end } = arg.range;
-  // 若是字符串，删掉两侧的引号
-  if (arg.isString) {
-    // 如果引号左侧是 等号，则可能是 jsx 的 props，此时要替换成 {
-    const preTextStart = start - 1;
-    const [last2Char, last1Char] = code.slice(preTextStart, start + 1).split('');
-    let finalReplaceVal = val;
-    if (last2Char === '=') {
-      if (isHtmlFile) {
-        finalReplaceVal = '{{' + val + '}}';
-      } else if (isVueFile) {
-        finalReplaceVal = '{{' + val + '}}';
-      } else {
-        finalReplaceVal = '{' + val + '}';
-      }
-    }
-    // 若是模板字符串，看看其中是否包含变量
-    if (last1Char === '`') {
-      const varInStr = arg.text.match(/(\$\{[^\}]+?\})/g);
-      if (varInStr) {
-        const kvPair = varInStr.map((str, index) => {
-          return `val${index + 1}: ${str.replace(/^\${([^\}]+)\}$/, '$1')}`;
-        });
-        finalReplaceVal = `I18N.template(${val}, { ${kvPair.join(',\n')} })`;
+    const code = readFile(filePath);
+    const isHtmlFile = _.endsWith(filePath, '.html');
+    const isVueFile = _.endsWith(filePath, '.vue');
+    let newCode = code;
+    let finalReplaceText = arg.text;
+    const { start, end } = arg.range;
+    // 若是字符串，删掉两侧的引号
+    if (arg.isString) {
+        // 如果引号左侧是 等号，则可能是 jsx 的 props，此时要替换成 {
+        /**
+         * 该函数是针对jsx的，如果是正常的template写法，
+         * 需要针对sourceSpan（包含属性和属性值）作替换
+         * 
+         */
+        const preTextStart = start - 1;
+        const [last2Char, last1Char] = code.slice(preTextStart, start + 1).split('');
+        let finalReplaceVal = val;
+        if (last2Char === '=') {
+            if (isHtmlFile) {
+                finalReplaceVal = '{{' + val + '}}';
+            } else if (isVueFile) {
+                finalReplaceVal = '{{' + val + '}}';
+            } else {
+                finalReplaceVal = '{' + val + '}';
+            }
+        }
+        // 若是模板字符串，看看其中是否包含变量
+        if (last1Char === '`') {
+            const varInStr = arg.text.match(/(\$\{[^\}]+?\})/g);
+            if (varInStr) {
+                const kvPair = varInStr.map((str, index) => {
+                    return `val${index + 1}: ${str.replace(/^\${([^\}]+)\}$/, '$1')}`;
+                });
+                /**
+                 * finalReplaceVal处理成这种形式：
+                 * I18N.template(I18N.SearchCustomer.index.chineseSymbols, {
+                 *   val1: this.nameCN,
+                 *   val2: name,
+                 *   val3: age
+                 * })
+                 */
+                finalReplaceVal = `I18N.template(${val}, { ${kvPair.join(',\n')} })`;
 
-        varInStr.forEach((str, index) => {
-          finalReplaceText = finalReplaceText.replace(str, `{val${index + 1}}`);
-        });
-      }
-    }
+                /**
+                 * finalReplaceText处理成这种形式：
+                 * '统计分析--存档及会话类别统计-存档情况统计--查询条件【时间：{val1}；成员/部门：{val2}】 '
+                 */
+                varInStr.forEach((str, index) => {
+                    finalReplaceText = finalReplaceText.replace(str, `{val${index + 1}}`);
+                });
+            }
+        }
 
-    newCode = `${code.slice(0, start)}${finalReplaceVal}${code.slice(end)}`;
-  } else {
-    if (isHtmlFile || isVueFile) {
-      newCode = `${code.slice(0, start)}{{${val}}}${code.slice(end)}`;
+        newCode = `${code.slice(0, start)}${finalReplaceVal}${code.slice(end)}`;
     } else {
-      newCode = `${code.slice(0, start)}{${val}}${code.slice(end)}`;
+        if (isHtmlFile || isVueFile) {
+            newCode = `${code.slice(0, start)}{{${val}}}${code.slice(end)}`;
+        } else {
+            newCode = `${code.slice(0, start)}{${val}}${code.slice(end)}`;
+        }
     }
-  }
 
-  try {
-    // 更新语言文件
-    updateLangFiles(val, finalReplaceText, validateDuplicate);
-    // 若更新成功再替换代码
-    return writeFile(filePath, newCode);
-  } catch (e) {
-    return Promise.reject(e.message);
-  }
+    try {
+        // 更新语言文件
+        updateLangFiles(val, finalReplaceText, validateDuplicate);
+        // 若更新成功再替换代码
+        return writeFile(filePath, newCode);
+    } catch (e) {
+        return Promise.reject(e.message);
+    }
 }
 
 export { replaceAndUpdate, hasImportI18N, createImportI18N };

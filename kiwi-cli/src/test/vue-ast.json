@@ -1,0 +1,241 @@
+{
+    "type": 1,
+    "tag": "template",
+    "attrsList": [],
+    "attrsMap": {},
+    "rawAttrsMap": {},
+    "children": [
+        {
+            "type": 1,
+            "tag": "div",
+            "attrsList": [],
+            "attrsMap": {},
+            "rawAttrsMap": {},
+            "children": [
+                {
+                    "type": 1,
+                    "tag": "div",
+                    "attrsList": [],
+                    "attrsMap": {
+                        "class": "item"
+                    },
+                    "rawAttrsMap": {
+                        "class": {
+                            "name": "class",
+                            "value": "item",
+                            "start": 36,
+                            "end": 48
+                        }
+                    },
+                    "children": [
+                        {
+                            "type": 1,
+                            "tag": "input",
+                            "attrsList": [
+                                {
+                                    "name": "type",
+                                    "value": "text",
+                                    "start": 70,
+                                    "end": 81
+                                },
+                                {
+                                    "name": "placeholder",
+                                    "value": "请输入",
+                                    "start": 82,
+                                    "end": 99
+                                }
+                            ],
+                            "attrsMap": {
+                                "type": "text",
+                                "placeholder": "请输入"
+                            },
+                            "rawAttrsMap": {
+                                "type": {
+                                    "name": "type",
+                                    "value": "text",
+                                    "start": 70,
+                                    "end": 81
+                                },
+                                "placeholder": {
+                                    "name": "placeholder",
+                                    "value": "请输入",
+                                    "start": 82,
+                                    "end": 99
+                                }
+                            },
+                            "children": [],
+                            "start": 63,
+                            "end": 102,
+                            "plain": false,
+                            "attrs": [
+                                {
+                                    "name": "type",
+                                    "value": "\"text\"",
+                                    "start": 70,
+                                    "end": 81
+                                },
+                                {
+                                    "name": "placeholder",
+                                    "value": "\"请输入\"",
+                                    "start": 82,
+                                    "end": 99
+                                }
+                            ],
+                            "static": true
+                        }
+                    ],
+                    "start": 31,
+                    "end": 118,
+                    "plain": false,
+                    "staticClass": "\"item\"",
+                    "static": true,
+                    "staticInFor": false,
+                    "staticRoot": true,
+                    "staticProcessed": true
+                },
+                {
+                    "type": 3,
+                    "text": " ",
+                    "start": 118,
+                    "end": 128,
+                    "static": true
+                },
+                {
+                    "type": 1,
+                    "tag": "div",
+                    "attrsList": [],
+                    "attrsMap": {
+                        "class": "item"
+                    },
+                    "rawAttrsMap": {
+                        "class": {
+                            "name": "class",
+                            "value": "item",
+                            "start": 133,
+                            "end": 145
+                        }
+                    },
+                    "children": [
+                        {
+                            "type": 1,
+                            "tag": "p",
+                            "attrsList": [],
+                            "attrsMap": {},
+                            "rawAttrsMap": {},
+                            "children": [
+                                {
+                                    "type": 3,
+                                    "text": "红烧豆腐",
+                                    "start": 163,
+                                    "end": 167,
+                                    "static": true
+                                }
+                            ],
+                            "start": 160,
+                            "end": 171,
+                            "plain": true,
+                            "static": true,
+                            "staticInFor": false,
+                            "staticRoot": false
+                        },
+                        {
+                            "type": 3,
+                            "text": " ",
+                            "start": 171,
+                            "end": 185,
+                            "static": true
+                        },
+                        {
+                            "type": 1,
+                            "tag": "Test",
+                            "attrsList": [],
+                            "attrsMap": {},
+                            "rawAttrsMap": {},
+                            "children": [],
+                            "start": 185,
+                            "end": 198,
+                            "plain": true,
+                            "static": false,
+                            "staticRoot": false
+                        }
+                    ],
+                    "start": 128,
+                    "end": 214,
+                    "plain": false,
+                    "staticClass": "\"item\"",
+                    "static": false,
+                    "staticRoot": false
+                },
+                {
+                    "type": 3,
+                    "text": " ",
+                    "start": 214,
+                    "end": 224,
+                    "static": true
+                },
+                {
+                    "type": 1,
+                    "tag": "div",
+                    "attrsList": [],
+                    "attrsMap": {
+                        ":class": "['item', flag ? 'flag' : '']"
+                    },
+                    "rawAttrsMap": {
+                        ":class": {
+                            "name": ":class",
+                            "value": "['item', flag ? 'flag' : '']",
+                            "start": 229,
+                            "end": 266
+                        }
+                    },
+                    "children": [
+                        {
+                            "type": 1,
+                            "tag": "span",
+                            "attrsList": [],
+                            "attrsMap": {},
+                            "rawAttrsMap": {},
+                            "children": [
+                                {
+                                    "type": 2,
+                                    "expression": "\"蜀山街道\"+_s(name)",
+                                    "tokens": [
+                                        "蜀山街道",
+                                        {
+                                            "@binding": "name"
+                                        }
+                                    ],
+                                    "text": "蜀山街道{{ name }}",
+                                    "start": 287,
+                                    "end": 301,
+                                    "static": false
+                                }
+                            ],
+                            "start": 281,
+                            "end": 308,
+                            "plain": true,
+                            "static": false,
+                            "staticRoot": false
+                        }
+                    ],
+                    "start": 224,
+                    "end": 324,
+                    "plain": false,
+                    "classBinding": "['item', flag ? 'flag' : '']",
+                    "static": false,
+                    "staticRoot": false
+                }
+            ],
+            "start": 16,
+            "end": 336,
+            "plain": true,
+            "static": false,
+            "staticRoot": false
+        }
+    ],
+    "start": 0,
+    "end": 349,
+    "plain": true,
+    "static": false,
+    "staticRoot": false
+}

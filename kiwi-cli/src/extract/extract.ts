@@ -22,6 +22,9 @@ const CONFIG = getProjectConfig();
 function findAllChineseText(dir: string) {
     const dirPath = path.resolve(process.cwd(), dir);
     const files = getSpecifiedFiles(dirPath, CONFIG.ignoreDir, CONFIG.ignoreFile);
+    /**
+     * js应该是可以用findTextInTs(code, fileName)，需要增加switch的情况
+     */
     const filterFiles = files.filter(file => {
         return file.endsWith('.ts') || file.endsWith('.tsx') || file.endsWith('.vue');
     });
@@ -98,6 +101,9 @@ function extractAll(dirPath?: string) {
             suggestion.shift();
         }
         /** 如果没有匹配到 Key */
+        /**
+         * 分割绝对路径currentFilename，取最后一层文件夹名和文件名
+         */
         if (!(suggestion && suggestion.length)) {
             const names = slash(currentFilename).split('/');
             const fileName = _.last(names) as any;
