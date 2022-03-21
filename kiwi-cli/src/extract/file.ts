@@ -14,33 +14,38 @@ import * as fs from 'fs';
  * @param {ignoreDirectory} 忽略文件夹 {ignoreFile} 忽略的文件
  */
 function getSpecifiedFiles(dir, ignoreDirectory = '', ignoreFile = '') {
-  return fs.readdirSync(dir).reduce((files, file) => {
-    const name = path.join(dir, file);
-    const isDirectory = fs.statSync(name).isDirectory();
-    const isFile = fs.statSync(name).isFile();
+    return fs.readdirSync(dir).reduce((files, file) => {
+        const name = path.join(dir, file);
+        const isDirectory = fs.statSync(name).isDirectory();
+        const isFile = fs.statSync(name).isFile();
 
-    if (isDirectory) {
-      return files.concat(getSpecifiedFiles(name, ignoreDirectory, ignoreFile));
-    }
+        if (isDirectory) {
+            return files.concat(getSpecifiedFiles(name, ignoreDirectory, ignoreFile));
+        }
 
-    /**
-     * 这边有个问题，忽略的文件夹是绝对路径比较好
-     * nwj备注
-     */
-    const isIgnoreDirectory =
-      !ignoreDirectory ||
-      (ignoreDirectory &&
-        !path
-          .dirname(name)
-          .split('/')
-          .includes(ignoreDirectory));
-    const isIgnoreFile = !ignoreFile || (ignoreFile && path.basename(name) !== ignoreFile);
+        /**
+         * 这边有个问题，忽略的文件夹是绝对路径比较好，
+         * 要体现路径的唯一性，也可以是部分相对路径如：
+         * A/B/C
+         * 
+         * isIgnoreDirectory为true表示不被忽略
+         * 
+         * nwj备注
+         */
+        const isIgnoreDirectory =
+            !ignoreDirectory ||
+            (ignoreDirectory &&
+                !path
+                    .dirname(name)
+                    .split('/')
+                    .includes(ignoreDirectory));
+        const isIgnoreFile = !ignoreFile || (ignoreFile && path.basename(name) !== ignoreFile);
 
-    if (isFile && isIgnoreDirectory && isIgnoreFile) {
-      return files.concat(name);
-    }
-    return files;
-  }, []);
+        if (isFile && isIgnoreDirectory && isIgnoreFile) {
+            return files.concat(name);
+        }
+        return files;
+    }, []);
 }
 
 /**
@@ -48,9 +53,9 @@ function getSpecifiedFiles(dir, ignoreDirectory = '', ignoreFile = '') {
  * @param fileName
  */
 function readFile(fileName) {
-  if (fs.existsSync(fileName)) {
-    return fs.readFileSync(fileName, 'utf-8');
-  }
+    if (fs.existsSync(fileName)) {
+        return fs.readFileSync(fileName, 'utf-8');
+    }
 }
 
 /**
@@ -58,9 +63,9 @@ function readFile(fileName) {
  * @param fileName
  */
 function writeFile(filePath, file) {
-  if (fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, file);
-  }
+    if (fs.existsSync(filePath)) {
+        fs.writeFileSync(filePath, file);
+    }
 }
 
 export { getSpecifiedFiles, readFile, writeFile };
