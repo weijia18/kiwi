@@ -7,7 +7,7 @@ import * as _ from 'lodash';
 import * as randomstring from 'randomstring';
 import * as fs from 'fs-extra';
 import * as slash from 'slash2';
-import { getSuggestLangObj } from './getLangData';
+import { getSuggestLangObj, getSuggestion } from './getLangData';
 import { DIR_ADAPTOR } from './const';
 import { findAllI18N, findI18N } from './findAllI18N';
 import { findMatchKey } from './utils';
@@ -37,32 +37,8 @@ export function activate(context: vscode.ExtensionContext) {
             console.log("targetStrs", targetStrs)
         });
     }
-    const currentFilename = activeEditor.document.fileName;
-    const suggestPageRegex = /\/pages\/\w+\/([^\/]+)\/([^\/\.]+)/;
 
-    let suggestion = [];
-    if (currentFilename.includes('/pages/')) {
-        suggestion = currentFilename.match(suggestPageRegex);
-    }
-    if (suggestion) {
-        suggestion.shift();
-    }
-    /** 如果没有匹配到 Key */
-    /**
-     * 这里的suggestion有缺陷，应该根据activeEditor做改变
-     * 目前的suggestion只和初次打开的文件有关
-     */
-    if (!(suggestion && suggestion.length)) {
-        const names = slash(currentFilename).split('/') as string[];
-        const fileName = _.last(names);
-        const fileKey = fileName.split('.')[0].replace(new RegExp('-', 'g'), '_');
-        const dir = names[names.length - 2].replace(new RegExp('-', 'g'), '_');
-        if (dir === fileKey) {
-            suggestion = [dir];
-        } else {
-            suggestion = [dir, fileKey];
-        }
-    }
+    let suggestion = []
     context.subscriptions.push(vscode.commands.registerTextEditorCommand('vscode-i18n-linter.findI18N', findI18N));
 
     // 识别到出错时点击小灯泡弹出的操作
@@ -130,6 +106,7 @@ export function activate(context: vscode.ExtensionContext) {
                 if (args.varName) {
                     return resolve(args.varName);
                 }
+                suggestion = getSuggestion()
                 // 否则要求用户输入变量名
                 return resolve(
                     vscode.window.showInputBox({
@@ -176,7 +153,6 @@ export function activate(context: vscode.ExtensionContext) {
                 vscode.window.showInformationMessage('没有找到可替换的公共文案');
                 return;
             }
-
             const replaceableStrs = targetStrs.reduce((prev, curr) => {
                 const key = findMatchKey(finalLangObj, curr.text);
                 if (key && key.startsWith('common.')) {
@@ -227,7 +203,7 @@ export function activate(context: vscode.ExtensionContext) {
                 vscode.window.showInformationMessage('没有找到可替换的文案');
                 return;
             }
-
+            suggestion = getSuggestion()
             vscode.window
                 .showInformationMessage(`共找到 ${targetStrs.length} 处可自动替换的文案，是否替换？`, { modal: true }, 'Yes')
                 .then(action => {
